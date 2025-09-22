@@ -1,0 +1,35 @@
+/* General */
+"home" = "Home";
+"favorites" = "Favorites";
+"settings" = "Settings";
+"preferences" = "Preferences";
+"account" = "Account";
+"about" = "About";
+"no_favorites_yet" = "No favorites yet";
+"favorites_empty_hint" = "Save meals you love to see them here.";
+
+/* Home */
+"get_new_suggestion" = "Get New Suggestion";
+"show_another" = "Show Another";
+"loading" = "Loading...";
+"see_recipe" = "See Recipe";
+"save" = "Save";
+"order" = "Order";
+"loading_new_suggestion" = "Loading new suggestion";
+"placeholder_suggestion" = "Your suggestion will appear here";
+
+/* Settings */
+"dietary_restrictions" = "Dietary Restrictions";
+"cooking_time_available" = "Cooking Time Available";
+"cooking_time" = "Cooking Time";
+"cuisine_preferences" = "Cuisine Preferences";
+
+/* Recipe */
+"recipe" = "Recipe";
+"ingredients" = "Ingredients";
+"instructions" = "Instructions";
+"start_cooking" = "Start Cooking";
+"close" = "Close";
+
+/* Errors */
+"error_unable_to_load" = "Unable to load suggestion. Please try again.";
