@@ -9,8 +9,13 @@ import Foundation
 
 @MainActor
 final class AppState: ObservableObject {
+    static let shared = AppState() // Singleton instance
+    
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isPremium = false // TODO: Connect to actual subscription status
+    
+    private init() {} // Private initializer for singleton
     
     // MARK: - Public Methods
     
@@ -40,5 +45,11 @@ final class AppState: ObservableObject {
     func reset() {
         isLoading = false
         errorMessage = nil
+    }
+    
+    /// Toggle premium status (for testing purposes)
+    func togglePremium() {
+        isPremium.toggle()
+        print("🍽️ [AppState] Premium status toggled to: \(isPremium)")
     }
 }

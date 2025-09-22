@@ -11,7 +11,9 @@ struct RecipeDetailView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: RecipeViewModel
-    @State private var isSaved = false
+    @StateObject private var favoritesService = FavoritesService.shared
+    @StateObject private var appState = AppState.shared
+    @State private var showPremiumAlert = false
     
     init(meal: Meal) {
         self.meal = meal
@@ -82,30 +84,54 @@ struct RecipeDetailView: View {
                         
                         // Save Button
                         Button(action: toggleSaved) {
-                            Image(systemName: isSaved ? "heart.fill" : "heart")
+                            Image(systemName: favoritesService.isFavorite(meal) ? "heart.fill" : "heart")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(isSaved ? .red : .primary)
+                                .foregroundColor(favoritesService.isFavorite(meal) ? .red : .primary)
                         }
                     }
                 }
             }
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .alert("Premium Required", isPresented: $showPremiumAlert) {
+                Button("Upgrade to Premium") {
+                    // TODO: Show actual paywall
+                    print("🍽️ Show paywall from recipe detail")
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Save unlimited recipes to your favorites with Premium. Access them anytime, even offline!")
+            }
         }
     }
     
     // MARK: - Actions
     
     private func toggleSaved() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isSaved.toggle()
+        // Check premium status first
+        guard appState.isPremium else {
+            showPremiumAlert = true
+            return
         }
         
-        // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
-        
-        // TODO: Implement actual save functionality
+        Task {
+            do {
+                try await favoritesService.toggleFavorite(meal)
+                
+                // Haptic feedback on successful save/unsave
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                
+                // Animation feedback
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    // The UI will update automatically via @Published favorites
+                }
+                
+            } catch {
+                print("🍽️ [RecipeDetailView] Failed to toggle favorite: \(error)")
+                // Could show error alert here if needed
+            }
+        }
     }
 
     private func shareRecipe() {

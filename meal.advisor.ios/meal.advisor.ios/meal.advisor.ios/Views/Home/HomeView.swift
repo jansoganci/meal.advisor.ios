@@ -8,16 +8,15 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var appState = AppState()
+    @StateObject private var appState = AppState.shared
     @StateObject private var viewModel: HomeViewModel
-    @State private var isSaved = false
+    @StateObject private var favoritesService = FavoritesService.shared
     @State private var selectedMeal: Meal?
+    @State private var showPremiumAlert = false
     @Environment(\.openURL) private var openURL
     
     init() {
-        let appState = AppState()
-        self._appState = StateObject(wrappedValue: appState)
-        self._viewModel = StateObject(wrappedValue: HomeViewModel(appState: appState))
+        self._viewModel = StateObject(wrappedValue: HomeViewModel(appState: AppState.shared))
     }
 
     var body: some View {
@@ -90,9 +89,9 @@ struct HomeView: View {
                         ))
 
                         SuggestionActionsRow(
-                            isSaved: isSaved,
+                            isSaved: favoritesService.isFavorite(meal),
                             onSeeRecipe: { selectedMeal = meal },
-                            onToggleSave: { isSaved.toggle() },
+                            onToggleSave: { toggleFavorite(meal) },
                             onOrder: {
                                 let query = meal.title
                                     .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "meal"
@@ -132,6 +131,38 @@ struct HomeView: View {
         }
         .fullScreenCover(item: $selectedMeal) { meal in
             RecipeDetailView(meal: meal)
+        }
+        .alert("Premium Required", isPresented: $showPremiumAlert) {
+            Button("Upgrade to Premium") {
+                // TODO: Show actual paywall
+                print("🍽️ Show paywall from home")
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Save unlimited recipes to your favorites with Premium. Access them anytime, even offline!")
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func toggleFavorite(_ meal: Meal) {
+        // Check premium status first
+        guard appState.isPremium else {
+            showPremiumAlert = true
+            return
+        }
+        
+        Task {
+            do {
+                try await favoritesService.toggleFavorite(meal)
+                
+                // Haptic feedback on successful save/unsave
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                
+            } catch {
+                print("🍽️ [HomeView] Failed to toggle favorite: \(error)")
+            }
         }
     }
 }

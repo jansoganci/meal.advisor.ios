@@ -142,6 +142,7 @@ final class NetworkService {
             let maxCookingTime: Int
             let difficultyPreference: String?
             let excludedIngredients: [String]?
+            let servingSize: Int
         }
     }
 
@@ -177,7 +178,8 @@ final class NetworkService {
                 cuisinePreferences: Array(preferences.cuisinePreferences.map { $0.rawValue }),
                 maxCookingTime: preferences.maxCookingTime,
                 difficultyPreference: preferences.difficultyPreference?.rawValue,
-                excludedIngredients: Array(preferences.excludedIngredients)
+                excludedIngredients: Array(preferences.excludedIngredients),
+                servingSize: preferences.servingSize
             ),
             recentMealIds: nil,
             ingredientHint: nil
