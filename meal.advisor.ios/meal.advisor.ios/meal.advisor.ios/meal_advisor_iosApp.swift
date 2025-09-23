@@ -9,6 +9,11 @@ import SwiftUI
 
 @main
 struct meal_advisor_iosApp: App {
+    init() {
+        // Setup notification categories on app launch
+        NotificationService.shared.setupNotificationCategories()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

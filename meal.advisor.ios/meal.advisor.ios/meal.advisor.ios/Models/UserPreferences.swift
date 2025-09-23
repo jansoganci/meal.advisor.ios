@@ -14,6 +14,7 @@ struct UserPreferences: Codable, Equatable {
     var difficultyPreference: Meal.Difficulty?
     var excludedIngredients: Set<String>
     var servingSize: Int                       // number of people
+    var mealRatings: [UUID: MealRating]        // meal ID -> rating
 
     static let `default` = UserPreferences(
         dietaryRestrictions: [],
@@ -21,6 +22,7 @@ struct UserPreferences: Codable, Equatable {
         maxCookingTime: 60,
         difficultyPreference: nil,
         excludedIngredients: [],
-        servingSize: 2
+        servingSize: 2,
+        mealRatings: [:]
     )
 }

@@ -23,24 +23,44 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 TimeGreeting(date: Date())
+                
+                // Offline Status Banner
+                let offlineStatus = viewModel.mealService.getOfflineStatus()
+                if offlineStatus.isOffline {
+                    OfflineBanner(
+                        isOffline: offlineStatus.isOffline,
+                        hasOfflineContent: offlineStatus.hasOfflineContent,
+                        onRetry: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                viewModel.getNewSuggestion()
+                            }
+                        }
+                    )
+                }
 
                 Group {
-                    if appState.isLoading {
-                        VStack(alignment: .leading, spacing: 12) {
-                            LoadingShimmer()
-                                .aspectRatio(16/9, contentMode: .fit)
-                            LoadingShimmer()
-                                .frame(height: 16)
-                                .cornerRadius(8)
-                            LoadingShimmer()
-                                .frame(width: 220, height: 16)
-                                .cornerRadius(8)
+                    if viewModel.isLoading {
+                        VStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                LoadingShimmer()
+                                    .aspectRatio(16/9, contentMode: .fit)
+                                LoadingShimmer()
+                                    .frame(height: 16)
+                                    .cornerRadius(8)
+                                LoadingShimmer()
+                                    .frame(width: 220, height: 16)
+                                    .cornerRadius(8)
+                            }
+                            .padding(16)
+                            .background(Color.cardBackground)
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                            .accessibilityLabel(String(localized: "loading_new_suggestion"))
+                            
+                            Text("Generating meal...")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
-                        .padding(16)
-                        .background(Color.cardBackground)
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
-                        .accessibilityLabel(String(localized: "loading_new_suggestion"))
                     } else if let error = appState.errorMessage {
                         // Error state in suggestion card area
                         VStack(spacing: 16) {
@@ -75,18 +95,35 @@ struct HomeView: View {
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                         .accessibilityLabel("Error loading suggestion: \(error)")
                     } else if let meal = viewModel.meal {
-                        SuggestionCard(
-                            title: meal.title,
-                            description: meal.description,
-                            timeText: "\(meal.prepTime) min",
-                            badges: [meal.difficulty.rawValue, meal.cuisine.rawValue],
-                            imageURL: nil
-                        )
-                        .id(meal.id)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .opacity
-                        ))
+                        VStack(spacing: 8) {
+                            SuggestionCard(
+                                title: meal.title,
+                                description: meal.description,
+                                timeText: "\(meal.prepTime) min",
+                                badges: [meal.difficulty.rawValue, meal.cuisine.rawValue],
+                                imageURL: nil
+                            )
+                            .id(meal.id)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                            
+                            if viewModel.isFallback {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                    Text("⚠️ fallback meal")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.orange.opacity(0.1))
+                                .cornerRadius(8)
+                            }
+                        }
 
                         SuggestionActionsRow(
                             isSaved: favoritesService.isFavorite(meal),
@@ -99,20 +136,32 @@ struct HomeView: View {
                                 openURL(url)
                             }
                         )
-                    } else {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.secondarySystemBackground))
-                            .frame(height: 220)
-                            .overlay(
-                                VStack(spacing: 8) {
-                                    Image(systemName: "fork.knife")
-                                        .font(.system(size: 36, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                    Text(String(localized: "placeholder_suggestion"))
-                                        .font(.callout)
-                                        .foregroundStyle(.secondary)
+                        
+                        // Meal Rating Section
+                        MealRatingView(
+                            rating: Binding(
+                                get: { viewModel.mealService.getRating(for: meal) },
+                                set: { newRating in
+                                    viewModel.mealService.rateMeal(meal, rating: newRating ?? .none)
                                 }
-                            )
+                            ),
+                            onRatingChanged: { rating in
+                                viewModel.mealService.rateMeal(meal, rating: rating)
+                            }
+                        )
+                    } else {
+                        EmptyStateView.noSuggestions(
+                            actionTitle: "Get Your First Suggestion",
+                            action: {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                    viewModel.getNewSuggestion()
+                                }
+                            }
+                        )
+                        .frame(height: 220)
+                        .background(Color.cardBackground)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                     }
                 }
 
@@ -121,12 +170,21 @@ struct HomeView: View {
                         viewModel.getNewSuggestion()
                     }
                 }
-                .disabled(appState.isLoading)
+                .disabled(viewModel.isLoading)
 
                 // Note: Error state now handled in main suggestion card area above
             }
             .padding(.horizontal, 16)
             .navigationTitle(String(localized: "home"))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    let offlineStatus = viewModel.mealService.getOfflineStatus()
+                    CompactOfflineIndicator(
+                        isOffline: offlineStatus.isOffline,
+                        hasOfflineContent: offlineStatus.hasOfflineContent
+                    )
+                }
+            }
             // Note: Toast overlay removed - using main error state in suggestion card area
         }
         .fullScreenCover(item: $selectedMeal) { meal in
@@ -169,7 +227,7 @@ struct HomeView: View {
 
 private extension HomeView {
     var primaryButtonTitle: String {
-        if appState.isLoading { return String(localized: "loading") }
+        if viewModel.isLoading { return String(localized: "loading") }
         return viewModel.meal == nil ? String(localized: "get_new_suggestion") : String(localized: "show_another")
     }
 }

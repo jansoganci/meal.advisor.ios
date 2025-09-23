@@ -1,9 +1,17 @@
-//
-//  NetworkService.swift
-//  meal.advisor.ios
-//
-//  Thin wrapper placeholder for Supabase or API calls
-//
+/**
+ * NetworkService - AI-First Meal Suggestion with Database Fallback
+ * 
+ * ARCHITECTURE:
+ * 1. Try AI-first Edge Function (suggest_meal_ai) with caching and timeout
+ * 2. If AI fails/times out → Fall back to database-first function (suggest_meal)
+ * 3. Handle all response types: AI-generated, cached, database fallback
+ * 
+ * RESPONSE DETECTION:
+ * - cachedResult: true if meal came from cache
+ * - backgroundGenerated: true if AI was slow and DB fallback used
+ * - aiGenerated: true if meal was AI-generated (cached or fresh)
+ * - fallbackUsed: true if database fallback was used
+ */
 
 import Foundation
 import Network
@@ -17,12 +25,15 @@ enum NetworkError: LocalizedError {
     case noMealFound
     case decodingError
     case noInternetConnection
+    case aiGenerationFailed(String)
+    case aiTimeout
+    case aiInvalidResponse
     
     var errorDescription: String? {
         switch self {
         case .supabaseNotConfigured:
             return "Please check your internet connection and try again"
-        case .edgeFunctionFailed(let reason):
+        case .edgeFunctionFailed(_):
             return "Unable to connect to our servers. Please try again in a moment"
         case .noMealFound:
             return "No meals match your preferences. Try adjusting your settings or try again"
@@ -30,11 +41,20 @@ enum NetworkError: LocalizedError {
             return "Something went wrong while loading your meal. Please try again"
         case .noInternetConnection:
             return "No internet connection. Please check your network and try again"
+        case .aiGenerationFailed(_):
+            return "AI meal generation failed. Using fallback suggestions."
+        case .aiTimeout:
+            return "AI is taking longer than expected. Using fallback suggestions."
+        case .aiInvalidResponse:
+            return "AI response was invalid. Using fallback suggestions."
         }
     }
 }
 
+@MainActor
 final class NetworkService {
+    private var offlineService: OfflineService { OfflineService.shared }
+    
     private var useSupabase: Bool {
         SecretsConfig.shared.supabaseURL != nil && SecretsConfig.shared.supabaseAnonKey != nil
     }
@@ -57,42 +77,80 @@ final class NetworkService {
         }
     }
 
-    func fetchMealSuggestion(preferences: UserPreferences) async throws -> Meal {
-        print("🍽️ [NetworkService] fetchMealSuggestion called")
-        print("🍽️ [NetworkService] useSupabase: \(useSupabase)")
-        
+    func fetchMealSuggestion(preferences: UserPreferences, recentMealIds: [UUID] = []) async throws -> Meal {
         // Check network connectivity first
         do {
             try await checkNetworkConnectivity()
         } catch {
-            print("🍽️ [NetworkService] Network connectivity check failed")
+            // Try offline fallback before throwing error
+            if let offlineMeal = await offlineService.getRandomOfflineMeal(matching: preferences) {
+                print("🌐 [NetworkService] Using offline fallback meal: \(offlineMeal.title)")
+                return offlineMeal
+            }
             throw NetworkError.noInternetConnection
         }
         
         if useSupabase {
-            print("🍽️ [NetworkService] Attempting to call Supabase Edge Function")
-            // Prefer Edge Function (suggest_meal) which uses LLM reranking behind the scenes
+            // Try AI-first approach with automatic fallback
             do {
-                if let meal = try await invokeSuggestMeal(preferences: preferences) {
-                    print("🍽️ [NetworkService] Successfully got meal from Supabase: \(meal.title)")
+                if let meal = try await invokeSuggestMealAI(preferences: preferences, recentMealIds: recentMealIds) {
+                    // Cache the meal for offline use
+                    await offlineService.cacheMeal(meal)
                     return meal
                 } else {
-                    print("🍽️ [NetworkService] Edge Function returned nil")
                     throw NetworkError.noMealFound
                 }
-            } catch let networkError as NetworkError {
-                print("🍽️ [NetworkService] NetworkError: \(networkError.localizedDescription)")
-                throw networkError
+            } catch is NetworkError {
+                // Fallback to original database-first function
+                do {
+                    if let meal = try await invokeSuggestMeal(preferences: preferences, recentMealIds: recentMealIds) {
+                        // Cache the meal for offline use
+                        await offlineService.cacheMeal(meal)
+                        return meal
+                    } else {
+                        throw NetworkError.noMealFound
+                    }
+                } catch {
+                    // Try offline fallback as last resort
+                    if let offlineMeal = await offlineService.getRandomOfflineMeal(matching: preferences) {
+                        print("🌐 [NetworkService] Using offline fallback after database error: \(offlineMeal.title)")
+                        return offlineMeal
+                    }
+                    throw NetworkError.noMealFound
+                }
             } catch {
-                print("🍽️ [NetworkService] Edge Function failed with error: \(error)")
-                throw NetworkError.edgeFunctionFailed(error.localizedDescription)
+                // Fallback to original database-first function
+                do {
+                    if let meal = try await invokeSuggestMeal(preferences: preferences, recentMealIds: recentMealIds) {
+                        // Cache the meal for offline use
+                        await offlineService.cacheMeal(meal)
+                        return meal
+                    } else {
+                        throw NetworkError.noMealFound
+                    }
+                } catch {
+                    // Try offline fallback as last resort
+                    if let offlineMeal = await offlineService.getRandomOfflineMeal(matching: preferences) {
+                        print("🌐 [NetworkService] Using offline fallback after AI error: \(offlineMeal.title)")
+                        return offlineMeal
+                    }
+                    throw NetworkError.edgeFunctionFailed(error.localizedDescription)
+                }
             }
         } else {
             print("🍽️ [NetworkService] Supabase not configured")
             if allowFallbackToStub {
                 print("🍽️ [NetworkService] Using fallback stub data for development")
-                return try await createStubMeal()
+                let stubMeal = try await createStubMeal()
+                // Cache stub meal for offline use
+                await offlineService.cacheMeal(stubMeal)
+                return stubMeal
             } else {
+                // Try offline fallback when Supabase is not configured
+                if let offlineMeal = await offlineService.getRandomOfflineMeal(matching: preferences) {
+                    print("🌐 [NetworkService] Using offline fallback when Supabase not configured: \(offlineMeal.title)")
+                    return offlineMeal
+                }
                 throw NetworkError.supabaseNotConfigured
             }
         }
@@ -152,17 +210,21 @@ final class NetworkService {
         let badges: [String]?
         let alternatives: [String]?
         let reason: String?
+        let aiGenerated: Bool?
+        let fallbackUsed: Bool?
+        let cachedResult: Bool?
+        let backgroundGenerated: Bool?
     }
 
-    private func invokeSuggestMeal(preferences: UserPreferences) async throws -> Meal? {
+    // MARK: - AI-First Edge Function
+    private func invokeSuggestMealAI(preferences: UserPreferences, recentMealIds: [UUID] = []) async throws -> Meal? {
         guard let baseURL = SecretsConfig.shared.supabaseURL,
               let key = SecretsConfig.shared.supabaseAnonKey else { 
-            print("🍽️ [NetworkService] Missing Supabase credentials")
+            print("🤖 [NetworkService] Missing Supabase credentials")
             throw NetworkError.supabaseNotConfigured
         }
 
-        let url = baseURL.appendingPathComponent("functions/v1/suggest_meal")
-        print("🍽️ [NetworkService] Calling Edge Function at: \(url)")
+        let url = baseURL.appendingPathComponent("functions/v1/suggest_meal_ai")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -181,27 +243,20 @@ final class NetworkService {
                 excludedIngredients: Array(preferences.excludedIngredients),
                 servingSize: preferences.servingSize
             ),
-            recentMealIds: nil,
+            recentMealIds: recentMealIds.map { $0.uuidString },
             ingredientHint: nil
         )
 
         let encoder = JSONEncoder()
         let body = try encoder.encode(req)
         request.httpBody = body
-        
-        print("🍽️ [NetworkService] Request payload: \(String(data: body, encoding: .utf8) ?? "Unable to decode")")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { 
-            print("🍽️ [NetworkService] Invalid HTTP response")
             throw NetworkError.edgeFunctionFailed("Invalid HTTP response")
         }
         
-        print("🍽️ [NetworkService] HTTP Status Code: \(http.statusCode)")
-        print("🍽️ [NetworkService] Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
-        
         guard (200..<300).contains(http.statusCode) else {
-            print("🍽️ [NetworkService] HTTP error: \(http.statusCode)")
             let errorMessage = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
             throw NetworkError.edgeFunctionFailed(errorMessage)
         }
@@ -213,18 +268,97 @@ final class NetworkService {
             let res = try decoder.decode(SuggestResponse.self, from: data)
             
             if res.status == "ok", let meal = res.meal {
-                print("🍽️ [NetworkService] Successfully decoded meal: \(meal.title)")
-                print("🍽️ [NetworkService] Meal ingredients count: \(meal.ingredients.count)")
-                print("🍽️ [NetworkService] First ingredient: \(meal.ingredients.first?.name ?? "none")")
+                // Log meal source for debugging (cache, AI, or database fallback)
+                let cachedResult = res.cachedResult ?? false
+                let backgroundGenerated = res.backgroundGenerated ?? false
+                let source = cachedResult ? "Cache" : (backgroundGenerated ? "Database Fallback" : "AI Generation")
+                print("🤖 [NetworkService] Meal: \(meal.title) (Source: \(source))")
                 return meal
             } else {
-                print("🍽️ [NetworkService] Edge Function returned no_match or no meal. Status: \(res.status), Reason: \(res.reason ?? "None")")
                 throw NetworkError.noMealFound
             }
         } catch {
-            print("🍽️ [NetworkService] Failed to decode response: \(error)")
+            // Re-throw NetworkError as-is, otherwise wrap in aiInvalidResponse
+            if error is NetworkError {
+                throw error
+            } else {
+                throw NetworkError.aiInvalidResponse
+            }
+        }
+    }
+
+    // MARK: - Database-First Edge Function (Fallback)
+    private func invokeSuggestMeal(preferences: UserPreferences, recentMealIds: [UUID] = []) async throws -> Meal? {
+        guard let baseURL = SecretsConfig.shared.supabaseURL,
+              let key = SecretsConfig.shared.supabaseAnonKey else { 
+            print("🔄 [NetworkService] Missing Supabase credentials")
+            throw NetworkError.supabaseNotConfigured
+        }
+
+        let url = baseURL.appendingPathComponent("functions/v1/suggest_meal")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(key, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+
+        let req = SuggestRequest(
+            locale: Locale.current.identifier,
+            timeOfDay: timeOfDayString(),
+            preferences: .init(
+                dietaryRestrictions: Array(preferences.dietaryRestrictions.map { $0.rawValue }),
+                cuisinePreferences: Array(preferences.cuisinePreferences.map { $0.rawValue }),
+                maxCookingTime: preferences.maxCookingTime,
+                difficultyPreference: preferences.difficultyPreference?.rawValue,
+                excludedIngredients: Array(preferences.excludedIngredients),
+                servingSize: preferences.servingSize
+            ),
+            recentMealIds: recentMealIds.map { $0.uuidString },
+            ingredientHint: nil
+        )
+
+        let encoder = JSONEncoder()
+        let body = try encoder.encode(req)
+        request.httpBody = body
+        
+        print("🔄 [NetworkService] Recent meal IDs being sent: \(recentMealIds)")
+        print("🔄 [NetworkService] Request payload: \(String(data: body, encoding: .utf8) ?? "Unable to decode")")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { 
+            print("🔄 [NetworkService] Invalid HTTP response")
+            throw NetworkError.edgeFunctionFailed("Invalid HTTP response")
+        }
+        
+        print("🔄 [NetworkService] HTTP Status Code: \(http.statusCode)")
+        print("🔄 [NetworkService] Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
+        
+        guard (200..<300).contains(http.statusCode) else {
+            print("🔄 [NetworkService] HTTP error: \(http.statusCode)")
+            let errorMessage = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
+            throw NetworkError.edgeFunctionFailed(errorMessage)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .useDefaultKeys
+        
+        do {
+            let res = try decoder.decode(SuggestResponse.self, from: data)
+            
+            if res.status == "ok", let meal = res.meal {
+                print("🔄 [NetworkService] Successfully decoded fallback meal: \(meal.title)")
+                print("🔄 [NetworkService] Meal ingredients count: \(meal.ingredients.count)")
+                print("🔄 [NetworkService] First ingredient: \(meal.ingredients.first?.name ?? "none")")
+                return meal
+            } else {
+                print("🔄 [NetworkService] Database Edge Function returned no_match or no meal. Status: \(res.status), Reason: \(res.reason ?? "None")")
+                throw NetworkError.noMealFound
+            }
+        } catch {
+            print("🔄 [NetworkService] Failed to decode fallback response: \(error)")
             if let decodingError = error as? DecodingError {
-                print("🍽️ [NetworkService] Decoding error details: \(decodingError)")
+                print("🔄 [NetworkService] Decoding error details: \(decodingError)")
             }
             throw NetworkError.decodingError
         }

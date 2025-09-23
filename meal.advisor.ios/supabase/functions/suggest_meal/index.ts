@@ -69,7 +69,7 @@ async function tryFallbackQuery(supabase: any, preferences: any) {
   let fallbackQuery = supabase
     .from("meals")
     .select("id, title, description, prep_time, difficulty, cuisine, diet_tags, image_url, ingredients, instructions, nutrition_info")
-    .lte("prep_time", Math.min(preferences.maxCookingTime * 1.5, 120)) // Max 2 hours
+    .lte("prep_time", Math.ceil(Math.min(preferences.maxCookingTime * 1.5, 120))) // Max 2 hours, rounded up
     .limit(25);
     
   // Keep dietary restrictions (critical)
@@ -109,7 +109,7 @@ async function tryFallbackQuery(supabase: any, preferences: any) {
   let fallback2Query = supabase
     .from("meals")
     .select("id, title, description, prep_time, difficulty, cuisine, diet_tags, image_url, ingredients, instructions, nutrition_info")
-    .lte("prep_time", Math.min(preferences.maxCookingTime * 2, 120))
+    .lte("prep_time", Math.ceil(Math.min(preferences.maxCookingTime * 2, 120)))
     .limit(25);
     
   // Keep only dietary restrictions (most critical)
@@ -189,7 +189,8 @@ serve(async (req) => {
     }
     
     if (payload.recentMealIds?.length) {
-      query = query.not("id", "in", `(${payload.recentMealIds.map((x) => `'${x}'`).join(",")})`);
+      console.log(`🍽️ [EdgeFunction] Excluding recent meal IDs: ${payload.recentMealIds.join(', ')}`);
+      query = query.not("id", "in", `(${payload.recentMealIds.join(",")})`);
     }
 
     let { data: rows, error } = await query;

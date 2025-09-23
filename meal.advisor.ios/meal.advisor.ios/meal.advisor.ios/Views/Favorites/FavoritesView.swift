@@ -18,44 +18,17 @@ struct FavoritesView: View {
             Group {
                 if !appState.isPremium {
                     // Premium required state
-                    VStack(spacing: 20) {
-                        Image(systemName: "heart.circle")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.orange.gradient)
-                        
-                        VStack(spacing: 8) {
-                            Text("Save Your Favorite Recipes")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .multilineTextAlignment(.center)
-                            
-                            Text("Keep track of meals you love with Premium. Access them anytime, even offline!")
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        
-                        Button("Upgrade to Premium") {
+                    EmptyStateView.premiumRequired(
+                        title: "Save Your Favorite Recipes",
+                        description: "Keep track of meals you love with Premium. Access them anytime, even offline!",
+                        actionTitle: "Upgrade to Premium",
+                        action: {
                             showPremiumAlert = true
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    }
-                    .padding(32)
+                    )
                 } else if favoritesService.favorites.isEmpty {
                     // Empty favorites state (premium users)
-                    VStack(spacing: 16) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.secondary)
-                        Text("No Favorites Yet")
-                            .font(.headline)
-                        Text("Heart recipes you love to save them here!")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(24)
+                    EmptyStateView.noFavorites()
                 } else {
                     // Grid layout for saved favorites
                     ScrollView {
