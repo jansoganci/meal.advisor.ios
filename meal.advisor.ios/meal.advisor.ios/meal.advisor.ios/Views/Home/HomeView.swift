@@ -153,15 +153,25 @@ struct HomeView: View {
                             }
                         )
                     } else {
-                        EmptyStateView.noSuggestions(
-                            actionTitle: "Get Your First Suggestion",
-                            action: {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                    viewModel.getNewSuggestion()
-                                }
+                        VStack(spacing: 16) {
+                            Image(systemName: "fork.knife")
+                                .font(.system(size: 48, weight: .medium))
+                                .foregroundColor(.secondary)
+                            
+                            VStack(spacing: 8) {
+                                Text("No Suggestions Yet")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Tap the button below to get your first meal suggestion")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
                             }
-                        )
+                        }
+                        .padding(24)
                         .frame(height: 220)
+                        .frame(maxWidth: .infinity)
                         .background(Color.cardBackground)
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
