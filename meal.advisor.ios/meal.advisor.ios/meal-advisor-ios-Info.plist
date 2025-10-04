@@ -12,11 +12,11 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mealadvisor</string>
-				<string>com.googleusercontent.apps.179439935291-39lac3elm7ldcr8ksfngckop490ebvg8</string>
+				<string>com.googleusercontent.apps.YOUR_GOOGLE_CLIENT_ID</string>
 			</array>
 		</dict>
 	</array>
 	<key>GIDClientID</key>
-	<string>179439935291-39lac3elm7ldcr8ksfngckop490ebvg8.apps.googleusercontent.com</string>
+	<string>YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com</string>
 </dict>
 </plist>

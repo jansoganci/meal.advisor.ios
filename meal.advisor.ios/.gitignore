@@ -99,6 +99,22 @@ Secrets.plist
 .env.local
 .env.production
 
+# Apple private keys and certificates
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+
+# Google OAuth keys
+*googleusercontent*
+*GOCSPX*
+
+# API keys and secrets
+*api_key*
+*secret*
+*token*
+*credential*
+
 # IDE files
 .vscode/
 .idea/
