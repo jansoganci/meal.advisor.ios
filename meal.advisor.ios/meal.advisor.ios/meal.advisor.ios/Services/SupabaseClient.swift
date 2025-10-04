@@ -33,12 +33,12 @@ final class SupabaseClientManager {
         
         guard let url = SecretsConfig.shared.supabaseURL,
               let anonKey = SecretsConfig.shared.supabaseAnonKey else {
-            print("⚠️ [SupabaseClient] Supabase credentials not found in Secrets.plist")
-            print("⚠️ [SupabaseClient] Make sure Secrets.plist exists with SUPABASE_URL and SUPABASE_ANON_KEY")
+            print("⚠️ [SupabaseClient] Supabase credentials not found in environment variables")
+            print("⚠️ [SupabaseClient] Make sure Config.xcconfig exists with SUPABASE_URL and SUPABASE_ANON_KEY")
             return
         }
         
-        print("✅ [SupabaseClient] Supabase credentials loaded from Secrets.plist")
+        print("✅ [SupabaseClient] Supabase credentials loaded from environment variables")
         print("✅ [SupabaseClient] Project URL: \(url.absoluteString)")
         print("✅ [SupabaseClient] Anon Key: \(anonKey.prefix(20))...")
         

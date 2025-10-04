@@ -95,6 +95,7 @@ iOSInjectionProject/
 
 # Secrets and environment files
 Secrets.plist
+Config.xcconfig
 .env
 .env.local
 .env.production
