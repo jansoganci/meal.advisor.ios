@@ -94,7 +94,7 @@ struct ServingSizeView: View {
         .onAppear {
             servingSize = Double(prefsService.preferences.servingSize)
         }
-        .onChange(of: servingSize) { _, newValue in
+        .onChange(of: servingSize) { newValue in
             prefsService.preferences.servingSize = Int(newValue)
         }
     }

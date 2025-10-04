@@ -12,6 +12,7 @@ final class MealService: ObservableObject {
     private let network = NetworkService()
     private let preferencesService = UserPreferencesService.shared
     private let offlineService = OfflineService.shared
+    private let analyticsService = AnalyticsService.shared
 
     @Published var currentSuggestion: Meal?
     @Published var isLoading = false
@@ -61,6 +62,15 @@ final class MealService: ObservableObject {
             // Prefetch meal image for better UX
             await ImageService.shared.prefetch(url: meal.imageURL)
             currentSuggestion = meal
+            
+            // Track suggestion generation
+            let source = isOfflineMode ? "offline" : "online"
+            analyticsService.trackSuggestionGenerated(
+                mealID: meal.id,
+                cuisine: meal.cuisine.rawValue,
+                prepTime: meal.prepTime,
+                source: source
+            )
         } catch {
             // Update offline mode status
             isOfflineMode = offlineService.isOffline
@@ -84,6 +94,9 @@ final class MealService: ObservableObject {
             recentMealIDs.removeAll { $0 == meal.id }
             print("🍽️ [MealService] Removed disliked meal \(meal.id) from recent suggestions")
         }
+        
+        // Track rating event
+        analyticsService.trackMealRated(mealID: meal.id, rating: rating.rawValue)
         
         print("🍽️ [MealService] Rated meal '\(meal.title)' as \(rating.rawValue)")
     }

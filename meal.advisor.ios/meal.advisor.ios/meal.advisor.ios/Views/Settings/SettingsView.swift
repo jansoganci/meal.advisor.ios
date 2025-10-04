@@ -10,6 +10,11 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
     @StateObject private var prefsService = UserPreferencesService.shared
+    @StateObject private var appState = AppState.shared
+    @StateObject private var authService = AuthService.shared
+    @State private var showPaywall = false
+    @State private var showSignInPrompt = false
+    @State private var showEmailSignIn = false
     
     init() {
         self._viewModel = StateObject(wrappedValue: SettingsViewModel(appState: AppState.shared))
@@ -79,12 +84,58 @@ struct SettingsView: View {
                         action: viewModel.togglePremium
                     )
                     
-                    SettingsRow.action(
-                        title: "Sign in with Apple",
-                        icon: "person.circle",
-                        iconColor: .primary
-                    ) {
-                        // TODO: Implement Sign in with Apple
+                    if appState.isAuthenticated {
+                        SettingsRow.info(
+                            title: "Signed In",
+                            value: authService.currentUser?.email ?? "Apple ID",
+                            subtitle: "Account active",
+                            icon: "person.circle.fill",
+                            iconColor: .green
+                        )
+                        
+                        SettingsRow.action(
+                            title: "Sign Out",
+                            icon: "arrow.right.square",
+                            iconColor: .red
+                        ) {
+                            viewModel.signOut()
+                        }
+                    } else {
+                        // Apple Sign-In Button
+                        VStack(spacing: 8) {
+                            AppleSignInButton(
+                                onSuccess: {
+                                    print("🍎 [Settings] Apple Sign-In successful")
+                                },
+                                onError: { error in
+                                    print("🍎 [Settings] Apple Sign-In error: \(error)")
+                                }
+                            )
+                            .frame(height: 44)
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        SettingsRow.action(
+                            title: "Sign in with Google",
+                            icon: "g.circle.fill",
+                            iconColor: .blue
+                        ) {
+                            Task {
+                                do {
+                                    try await authService.signInWithGoogle()
+                                } catch {
+                                    print("Google sign-in failed: \(error)")
+                                }
+                            }
+                        }
+                        
+                        SettingsRow.action(
+                            title: "Sign in with Email",
+                            icon: "envelope",
+                            iconColor: .blue
+                        ) {
+                            showEmailSignIn = true
+                        }
                     }
                     
                     SettingsRow.action(
@@ -92,7 +143,7 @@ struct SettingsView: View {
                         icon: "creditcard",
                         iconColor: .green
                     ) {
-                        viewModel.showPremiumUpgrade()
+                        showPaywall = true
                     }
                 }
 
@@ -136,13 +187,14 @@ struct SettingsView: View {
             }
             .navigationTitle(String(localized: "settings"))
         }
-        .alert("Premium Required", isPresented: $viewModel.showingPremiumAlert) {
-            Button("Upgrade") {
-                // TODO: Show paywall
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Premium features require a subscription. Upgrade to unlock unlimited favorites and advanced features!")
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(source: .settings)
+        }
+        .sheet(isPresented: $showSignInPrompt) {
+            SignInPromptView(context: .premiumFeature)
+        }
+        .sheet(isPresented: $showEmailSignIn) {
+            EmailSignInView()
         }
         .alert("Sign Out", isPresented: $viewModel.showingSignOutAlert) {
             Button("Sign Out", role: .destructive) {

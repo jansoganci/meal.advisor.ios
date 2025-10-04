@@ -11,8 +11,11 @@ struct HomeView: View {
     @StateObject private var appState = AppState.shared
     @StateObject private var viewModel: HomeViewModel
     @StateObject private var favoritesService = FavoritesService.shared
+    @StateObject private var authService = AuthService.shared
     @State private var selectedMeal: Meal?
     @State private var showPremiumAlert = false
+    @State private var showPaywall = false
+    @State private var showSignInPrompt = false
     @Environment(\.openURL) private var openURL
     
     init() {
@@ -176,7 +179,7 @@ struct HomeView: View {
             }
             .padding(.horizontal, 16)
             .navigationTitle(String(localized: "home"))
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     let offlineStatus = viewModel.mealService.getOfflineStatus()
                     CompactOfflineIndicator(
@@ -184,29 +187,32 @@ struct HomeView: View {
                         hasOfflineContent: offlineStatus.hasOfflineContent
                     )
                 }
-            }
+            })
             // Note: Toast overlay removed - using main error state in suggestion card area
         }
         .fullScreenCover(item: $selectedMeal) { meal in
             RecipeDetailView(meal: meal)
         }
-        .alert("Premium Required", isPresented: $showPremiumAlert) {
-            Button("Upgrade to Premium") {
-                // TODO: Show actual paywall
-                print("🍽️ Show paywall from home")
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Save unlimited recipes to your favorites with Premium. Access them anytime, even offline!")
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(source: .favorites)
+        }
+        .sheet(isPresented: $showSignInPrompt) {
+            SignInPromptView(context: .savingFavorite)
         }
     }
     
     // MARK: - Actions
     
     private func toggleFavorite(_ meal: Meal) {
-        // Check premium status first
+        // Check authentication first
+        guard authService.isAuthenticated else {
+            showSignInPrompt = true
+            return
+        }
+        
+        // Then check premium status
         guard appState.isPremium else {
-            showPremiumAlert = true
+            showPaywall = true
             return
         }
         

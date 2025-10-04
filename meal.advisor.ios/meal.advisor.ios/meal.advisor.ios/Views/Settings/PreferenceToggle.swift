@@ -61,7 +61,7 @@ struct PreferenceToggle: View {
             // Toggle
             Toggle("", isOn: $isOn)
                 .labelsHidden()
-                .onChange(of: isOn) { _, newValue in
+                .onChange(of: isOn) { newValue in
                     onToggle?(newValue)
                     
                     // Haptic feedback

@@ -24,7 +24,7 @@ struct CookingTimeView: View {
         }
         .padding(16)
         .onAppear { value = Double(prefsService.preferences.maxCookingTime) }
-        .onChange(of: value) { _, newValue in
+        .onChange(of: value) { newValue in
             prefsService.preferences.maxCookingTime = Int(newValue)
         }
         .navigationTitle(String(localized: "cooking_time"))

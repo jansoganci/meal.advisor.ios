@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		C5BFC9002E800200006B3E0D /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFC9012E800200006B3E0D /* Supabase */; };
 		C5BFC9032E800300006B3E0D /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFC9042E800300006B3E0D /* Kingfisher */; };
+		C5BFC9062E800400006B3E0D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFC9072E800400006B3E0D /* GoogleSignIn */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				C5BFC9002E800200006B3E0D /* Supabase in Frameworks */,
 				C5BFC9032E800300006B3E0D /* Kingfisher in Frameworks */,
+				C5BFC9062E800400006B3E0D /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				C5BFC9012E800200006B3E0D /* Supabase */,
 				C5BFC9042E800300006B3E0D /* Kingfisher */,
+				C5BFC9072E800400006B3E0D /* GoogleSignIn */,
 			);
 			productName = meal.advisor.ios;
 			productReference = C5BFC85C2E800137006B3E0D /* MealAdvisor.app */;
@@ -106,6 +109,7 @@
 			packageReferences = (
 				C5BFC9022E800200006B3E0D /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				C5BFC9052E800300006B3E0D /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				C5BFC9082E800400006B3E0D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C5BFC85D2E800137006B3E0D /* Products */;
@@ -264,12 +268,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = meal.advisor.ios/meal.advisor.ios.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N5386872HH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "meal-advisor-ios-Info.plist";
+				INFOPLIST_KEY_ASAuthorizationAppleIDProvider = com.umursoganci.mealadvisor;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSUserNotificationUsageDescription = "We use notifications to remind you about meal suggestions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -277,16 +284,21 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.janstrade.meal-advisor-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = com.umursoganci.mealadvisor;
 				PRODUCT_NAME = MealAdvisor;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -295,12 +307,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = meal.advisor.ios/meal.advisor.ios.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N5386872HH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "meal-advisor-ios-Info.plist";
+				INFOPLIST_KEY_ASAuthorizationAppleIDProvider = com.umursoganci.mealadvisor;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSUserNotificationUsageDescription = "We use notifications to remind you about meal suggestions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -308,16 +323,21 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.janstrade.meal-advisor-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = com.umursoganci.mealadvisor;
 				PRODUCT_NAME = MealAdvisor;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -361,6 +381,14 @@
 				minimumVersion = 7.0.0;
 			};
 		};
+		C5BFC9082E800400006B3E0D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -373,6 +401,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C5BFC9052E800300006B3E0D /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		C5BFC9072E800400006B3E0D /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5BFC9082E800400006B3E0D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

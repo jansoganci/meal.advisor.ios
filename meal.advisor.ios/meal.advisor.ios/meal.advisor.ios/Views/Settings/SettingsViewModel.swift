@@ -20,6 +20,7 @@ final class SettingsViewModel: ObservableObject {
     private let appState: AppState
     private let preferencesService = UserPreferencesService.shared
     private let notificationService = NotificationService.shared
+    private let authService = AuthService.shared
     
     init(appState: AppState) {
         self.appState = appState
@@ -90,7 +91,7 @@ final class SettingsViewModel: ObservableObject {
     }
     
     func confirmSignOut() {
-        // TODO: Implement actual sign out logic
+        authService.signOut()
         print("🍽️ [SettingsViewModel] User signed out")
     }
     

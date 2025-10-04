@@ -13,7 +13,9 @@ struct RecipeDetailView: View {
     @StateObject private var viewModel: RecipeViewModel
     @StateObject private var favoritesService = FavoritesService.shared
     @StateObject private var appState = AppState.shared
+    @StateObject private var authService = AuthService.shared
     @State private var showPremiumAlert = false
+    @State private var showSignInPrompt = false
     
     init(meal: Meal) {
         self.meal = meal
@@ -61,7 +63,7 @@ struct RecipeDetailView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         HStack(spacing: 4) {
@@ -90,7 +92,7 @@ struct RecipeDetailView: View {
                         }
                     }
                 }
-            }
+            })
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .alert("Premium Required", isPresented: $showPremiumAlert) {
@@ -102,13 +104,22 @@ struct RecipeDetailView: View {
             } message: {
                 Text("Save unlimited recipes to your favorites with Premium. Access them anytime, even offline!")
             }
+            .sheet(isPresented: $showSignInPrompt) {
+                SignInPromptView(context: .savingFavorite)
+            }
         }
     }
     
     // MARK: - Actions
     
     private func toggleSaved() {
-        // Check premium status first
+        // Check authentication first
+        guard authService.isAuthenticated else {
+            showSignInPrompt = true
+            return
+        }
+        
+        // Then check premium status
         guard appState.isPremium else {
             showPremiumAlert = true
             return

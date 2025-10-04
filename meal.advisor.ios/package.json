@@ -1,0 +1,22 @@
+{
+  "name": "apple-jwt-generator",
+  "version": "1.0.0",
+  "description": "Generate Apple Sign-In JWT client secret for Supabase",
+  "main": "apple_jwt.js",
+  "scripts": {
+    "start": "node apple_jwt.js",
+    "generate-jwt": "node apple_jwt.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
+  "keywords": [
+    "apple",
+    "sign-in",
+    "jwt",
+    "supabase",
+    "authentication"
+  ],
+  "author": "Meal Advisor iOS",
+  "license": "MIT"
+}
