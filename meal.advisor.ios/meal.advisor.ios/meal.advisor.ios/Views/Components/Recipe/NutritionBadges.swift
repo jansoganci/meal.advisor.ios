@@ -57,10 +57,17 @@ struct RecipeMetadataRow: View {
     private var cuisineEmoji: String {
         switch cuisine {
         case .italian: return "🇮🇹"
-        case .american: return "🇺🇸"
-        case .asian: return "🥢"
-        case .mediterranean: return "🫒"
+        case .turkish: return "🇹🇷"
+        case .chinese: return "🥢"
+        case .japanese: return "🍣"
+        case .french: return "🥖"
+        case .thai: return "🌶️"
+        case .indian: return "🍛"
         case .mexican: return "🌮"
+        case .spanish: return "🇪🇸"
+        case .american: return "🇺🇸"
+        case .asian: return "🍜"
+        case .mediterranean: return "🫒"
         }
     }
     
@@ -248,6 +255,8 @@ struct DietTag: View {
             return .orange
         case .dairyFree:
             return .blue
+        case .noPork:
+            return .pink
         case .lowCarb:
             return .purple
         case .highProtein:
@@ -300,7 +309,7 @@ struct NutritionBadges_Previews: PreviewProvider {
                     dietTags: [.vegetarian, .lowCarb],
                     prepTime: 15,
                     difficulty: .easy,
-                    cuisine: .asian
+                    cuisine: .chinese
                 )
             }
         }

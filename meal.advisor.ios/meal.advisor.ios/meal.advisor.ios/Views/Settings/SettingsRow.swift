@@ -35,6 +35,29 @@ struct SettingsRow: View {
     }
     
     var body: some View {
+        Group {
+            if let destination = destination {
+                // Navigation row - wrap in NavigationLink
+                NavigationLink(destination: destination) {
+                    rowContent
+                }
+            } else {
+                // Action row or info row - use tap gesture
+                rowContent
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        action?()
+                    }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint(accessibilityHint ?? "")
+    }
+    
+    // MARK: - Row Content
+    
+    private var rowContent: some View {
         HStack(spacing: 12) {
             // Icon (if provided)
             if let icon = icon {
@@ -60,25 +83,12 @@ struct SettingsRow: View {
             
             Spacer()
             
-            // Accessory
+            // Accessory (NavigationLink adds its own chevron, so only show for action rows)
             if let accessory = accessory {
                 accessory
-            } else if destination != nil {
-                // Default chevron for navigation
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .accessibilityHidden(true)
             }
         }
         .padding(.vertical, 4)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            action?()
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint(accessibilityHint ?? "")
     }
     
     private var accessibilityLabel: String {

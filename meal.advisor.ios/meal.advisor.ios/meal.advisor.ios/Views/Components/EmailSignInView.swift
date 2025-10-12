@@ -148,7 +148,7 @@ struct EmailSignInView: View {
         .sheet(isPresented: $showPasswordReset) {
             PasswordResetView()
         }
-        .onChange(of: authService.isAuthenticated) { isAuth in
+        .onChange(of: authService.isAuthenticated) { _, isAuth in
             if isAuth {
                 // Dismiss after successful sign-in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

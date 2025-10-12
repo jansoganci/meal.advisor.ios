@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showPaywall = false
     @State private var showSignInPrompt = false
     @State private var showEmailSignIn = false
+    @Environment(\.openURL) private var openURL
     
     init() {
         self._viewModel = StateObject(wrappedValue: SettingsViewModel(appState: AppState.shared))
@@ -173,7 +174,10 @@ struct SettingsView: View {
                         icon: "hand.raised",
                         iconColor: .blue
                     ) {
-                        // TODO: Open privacy policy
+                        // Open Privacy Policy in Safari
+                        if let url = URL(string: "https://jansoganci.github.io/meal.advisor.ios/privacy-policy.html") {
+                            openURL(url)
+                        }
                     }
                     
                     SettingsRow.action(
@@ -181,8 +185,32 @@ struct SettingsView: View {
                         icon: "doc.text",
                         iconColor: .secondary
                     ) {
-                        // TODO: Open terms of service
+                        // Open Terms of Service in Safari
+                        if let url = URL(string: "https://jansoganci.github.io/meal.advisor.ios/terms.html") {
+                            openURL(url)
+                        }
                     }
+                }
+                
+                Section {
+                    HStack {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
+                            .frame(width: 24)
+                        
+                        Text("Photos provided by")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Link("Unsplash", destination: URL(string: "https://unsplash.com/?utm_source=meal_advisor&utm_medium=referral")!)
+                            .font(.subheadline)
+                            .foregroundColor(.accentGreen)
+                    }
+                } header: {
+                    Text("Attribution")
                 }
             }
             .navigationTitle(String(localized: "settings"))

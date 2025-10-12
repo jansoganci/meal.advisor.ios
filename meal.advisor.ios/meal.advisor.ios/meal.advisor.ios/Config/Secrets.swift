@@ -19,6 +19,7 @@ struct SecretsConfig {
     let appleKeyID: String?
     let appleTeamID: String?
     let applePrivateKey: String?
+    let unsplashAPIKey: String?
 
     init() {
         // Load from Secrets.plist file
@@ -33,6 +34,7 @@ struct SecretsConfig {
             appleKeyID = nil
             appleTeamID = nil
             applePrivateKey = nil
+            unsplashAPIKey = nil
             return
         }
         
@@ -50,6 +52,7 @@ struct SecretsConfig {
         appleServiceID = plist["APPLE_SERVICE_ID"] as? String
         appleKeyID = plist["APPLE_KEY_ID"] as? String
         appleTeamID = plist["APPLE_TEAM_ID"] as? String
+        unsplashAPIKey = plist["UNSPLASH_ACCESS_KEY"] as? String
         
         // Handle multi-line private key
         if let privateKey = plist["APPLE_PRIVATE_KEY"] as? String {

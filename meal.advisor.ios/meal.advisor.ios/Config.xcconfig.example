@@ -1,0 +1,20 @@
+//
+//  Config.xcconfig.example
+//  meal.advisor.ios
+//
+//  Example configuration file
+//  Copy this to Config.xcconfig and fill in your actual values
+//
+
+// MARK: - Supabase Configuration
+// SUPABASE_URL = https://your-project.supabase.co
+// SUPABASE_ANON_KEY = your_supabase_anon_key_here
+
+// MARK: - Google Sign-In (if needed)
+// GOOGLE_CLIENT_ID = your_google_client_id
+
+// MARK: - Build Settings Override
+// You can override any Xcode build settings here
+// Example: PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.mealadvisor
+
+

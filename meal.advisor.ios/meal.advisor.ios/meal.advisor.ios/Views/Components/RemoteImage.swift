@@ -12,6 +12,9 @@ struct RemoteImage: View {
     let aspectRatio: CGFloat = 16.0/9.0
 
     var body: some View {
+        // 🔍 DEBUG: Log URL changes
+        let _ = print("🖼️ [RemoteImage] Rendering with URL: \(url?.absoluteString.prefix(60) ?? "nil")")
+        
 #if canImport(Kingfisher)
         RemoteImageKF(url: url, aspectRatio: aspectRatio)
 #else
@@ -38,6 +41,8 @@ private struct RemoteImageKF: View {
                 .transition(.opacity.animation(.easeInOut(duration: 0.3)))
                 .aspectRatio(aspectRatio, contentMode: .fit)
                 .clipped()
+                // 🔧 FIX: Force KFImage to reload when URL changes
+                .id(url.absoluteString)
         } else {
             LoadingShimmer()
                 .aspectRatio(aspectRatio, contentMode: .fit)
@@ -74,6 +79,8 @@ private struct RemoteImageAsync: View {
                 }
                 .aspectRatio(aspectRatio, contentMode: .fit)
                 .clipped()
+                // 🔧 FIX: Force AsyncImage to reload when URL changes
+                .id(url.absoluteString)
             }
         }
     }

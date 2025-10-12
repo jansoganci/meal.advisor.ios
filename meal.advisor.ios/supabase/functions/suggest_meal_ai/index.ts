@@ -197,13 +197,25 @@ async function generateMealWithAI(payload: RequestPayload): Promise<AIResponse> 
     "  \"cuisine\": \"Italian\" | \"Asian\" | \"Mediterranean\" | \"American\" | etc,\n" +
     "  \"dietTags\": [\"tag1\", \"tag2\"],\n" +
     "  \"ingredients\": [\n" +
-    "    {\"name\": \"Ingredient Name\", \"amount\": \"1\", \"unit\": \"cup\"},\n" +
-    "    {\"name\": \"Another Ingredient\", \"amount\": \"2\", \"unit\": \"tbsp\"}\n" +
+    "    {\"name\": \"Chicken breast\", \"amount\": \"1\", \"unit\": \"lb\"},\n" +
+    "    {\"name\": \"Olive oil\", \"amount\": \"3\", \"unit\": \"tbsp\"},\n" +
+    "    {\"name\": \"Garlic cloves\", \"amount\": \"4\", \"unit\": \"cloves\"},\n" +
+    "    {\"name\": \"Cherry tomatoes\", \"amount\": \"2\", \"unit\": \"cups\"},\n" +
+    "    {\"name\": \"Fresh basil\", \"amount\": \"1/2\", \"unit\": \"cup\"},\n" +
+    "    {\"name\": \"Parmesan cheese\", \"amount\": \"1/4\", \"unit\": \"cup\"},\n" +
+    "    {\"name\": \"Pasta\", \"amount\": \"12\", \"unit\": \"oz\"},\n" +
+    "    {\"name\": \"Salt\", \"amount\": \"1\", \"unit\": \"tsp\"},\n" +
+    "    {\"name\": \"Black pepper\", \"amount\": \"1/2\", \"unit\": \"tsp\"}\n" +
     "  ],\n" +
     "  \"instructions\": [\n" +
-    "    \"Step 1: Detailed instruction\",\n" +
-    "    \"Step 2: Next step\",\n" +
-    "    \"Step 3: Final step\"\n" +
+    "    \"Pat chicken dry with paper towels, season both sides with salt and pepper\",\n" +
+    "    \"Heat large skillet over medium-high, add 2 tbsp olive oil until shimmering\",\n" +
+    "    \"Sear chicken 5-6 minutes per side until golden brown and cooked through (165°F)\",\n" +
+    "    \"Remove chicken to plate, add remaining oil and minced garlic to pan\",\n" +
+    "    \"Cook garlic 30 seconds until fragrant, add halved tomatoes, cook 3-4 minutes until bursting\",\n" +
+    "    \"Meanwhile, boil pasta according to package directions, drain and reserve 1 cup pasta water\",\n" +
+    "    \"Slice chicken, return to pan with cooked pasta, torn basil, and grated Parmesan\",\n" +
+    "    \"Toss everything together, adding reserved pasta water as needed for sauce consistency\"\n" +
     "  ],\n" +
     "  \"nutritionInfo\": {\n" +
     "    \"calories\": number,\n" +
@@ -223,7 +235,7 @@ async function generateMealWithAI(payload: RequestPayload): Promise<AIResponse> 
     generationConfig: {
       temperature: 0.7,
       top_p: 0.9,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
     },
   };
 
@@ -546,8 +558,9 @@ serve(async (req) => {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
+  let payload: RequestPayload;
   try {
-    const payload = (await req.json()) as RequestPayload;
+    payload = (await req.json()) as RequestPayload;
     const startTime = Date.now();
 
     // Clean up expired cache entries to prevent memory leaks
@@ -610,8 +623,8 @@ serve(async (req) => {
 
         const badges = [`${aiMeal.prepTime} min`, aiMeal.difficulty, aiMeal.cuisine].slice(0, 3);
         
-        // Cache successful AI result for future requests
-        saveToCache(cacheKey, meal, badges);
+        // ❌ REMOVED: No caching for AI meals - fresh suggestions every time
+        // saveToCache(cacheKey, meal, badges);
 
         return json({
           status: "ok",
@@ -654,7 +667,8 @@ serve(async (req) => {
           };
 
           const badges = [`${aiMeal.prepTime} min`, aiMeal.difficulty, aiMeal.cuisine].slice(0, 3);
-          saveToCache(cacheKey, meal, badges);
+          // ❌ REMOVED: No caching for AI meals - fresh suggestions every time
+          // saveToCache(cacheKey, meal, badges);
         }
       }).catch((error) => {
         console.log("🔄 [Background] AI generation failed:", error.message);
@@ -686,21 +700,12 @@ serve(async (req) => {
 
   } catch (err) {
     console.error("❌ [Error] Unexpected error in AI-first function:", err);
-    // Return dummy meal even for unexpected errors
-    try {
-      const dummyResult = createDummyMeal(payload);
-      return json({
-        ...dummyResult,
-        reason: "Server error occurred. Using safe placeholder meal."
-      }, 200);
-    } catch (dummyError) {
-      return json({ 
-        status: "no_match", 
-        reason: "Critical server error - unable to generate meal",
-        cachedResult: false,
-        backgroundGenerated: false
-      }, 500);
-    }
+    return json({ 
+      status: "no_match", 
+      reason: "Server error - unable to process request",
+      cachedResult: false,
+      backgroundGenerated: false
+    }, 500);
   }
 });
 

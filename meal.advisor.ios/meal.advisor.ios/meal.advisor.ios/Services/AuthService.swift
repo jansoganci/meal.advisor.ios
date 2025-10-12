@@ -547,6 +547,9 @@ final class AuthService: NSObject, ObservableObject {
             print("❌ [AuthService] Failed to sync preferences: \(error)")
         }
         
+        // ✅ NEW: Migrate usage tracking from device to user account
+        await UsageTrackingService.shared.migrateDeviceUsageToUser()
+        
         print("🔐 [AuthService] Data migration completed")
     }
     

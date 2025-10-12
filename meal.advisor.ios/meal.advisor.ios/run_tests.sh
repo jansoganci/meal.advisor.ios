@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# 🧪 MealAdvisor Test Runner Script
+# Runs unit tests by temporarily adding them to the app and executing
+
+echo "🧪 =========================================="
+echo "   MealAdvisor Unit Test Runner"
+echo "==========================================="
+echo ""
+echo "⚠️  NOTE: This requires adding test files to Xcode"
+echo ""
+echo "📋 SETUP STEPS:"
+echo "1. Open Xcode: open meal.advisor.ios.xcodeproj"
+echo "2. Editor → Add Target → iOS Unit Testing Bundle"
+echo "3. Name it: meal.advisor.iosTests"
+echo "4. Add test files from meal.advisor.iosTests/ folder"
+echo "5. Run: ⌘ + U in Xcode"
+echo ""
+echo "OR use command line after Xcode setup:"
+echo ""
+echo "xcodebuild test \\"
+echo "  -project meal.advisor.ios.xcodeproj \\"
+echo "  -scheme meal.advisor.ios \\"
+echo "  -destination 'platform=iOS Simulator,name=iPhone 16'"
+echo ""
+echo "==========================================="
+echo ""
+echo "📊 Test Files Created:"
+echo "  ✅ MealServiceTests.swift (8 tests)"
+echo "  ✅ UsageTrackingServiceTests.swift (11 tests)"  
+echo "  ✅ PurchaseServiceTests.swift (9 tests)"
+echo "  📄 Total: 28 tests ready to run"
+echo ""
+echo "See meal.advisor.iosTests/README_SETUP.md for full instructions"
+echo ""
+

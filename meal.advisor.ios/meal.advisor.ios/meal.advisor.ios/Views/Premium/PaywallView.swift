@@ -10,6 +10,7 @@ import SwiftUI
 struct PaywallView: View {
     @StateObject private var viewModel = PaywallViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     
     let source: PaywallSource
     
@@ -144,7 +145,9 @@ struct PaywallView: View {
                         
                         HStack(spacing: 16) {
                             Button("Terms of Service") {
-                                // TODO: Open terms
+                                if let url = URL(string: "https://jansoganci.github.io/meal.advisor.ios/terms.html") {
+                                    openURL(url)
+                                }
                             }
                             .font(.caption2)
                             .foregroundColor(.blue)
@@ -153,7 +156,9 @@ struct PaywallView: View {
                                 .foregroundColor(.secondary)
                             
                             Button("Privacy Policy") {
-                                // TODO: Open privacy
+                                if let url = URL(string: "https://jansoganci.github.io/meal.advisor.ios/privacy-policy.html") {
+                                    openURL(url)
+                                }
                             }
                             .font(.caption2)
                             .foregroundColor(.blue)

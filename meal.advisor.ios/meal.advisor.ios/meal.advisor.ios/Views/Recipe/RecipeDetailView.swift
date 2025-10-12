@@ -169,13 +169,25 @@ struct HeroImageSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Hero Image
-            RemoteImage(url: imageURL)
-                .aspectRatio(16/9, contentMode: .fill)
-                .clipped()
-                .accessibilityLabel("Photo of \(title)")
+            // Hero Image with Attribution
+            ZStack(alignment: .bottomTrailing) {
+                RemoteImage(url: imageURL)
+                    .aspectRatio(16/9, contentMode: .fill)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .accessibilityLabel("Photo of \(title)")
+                
+                // Show Unsplash attribution if available
+                if let imageURL = imageURL,
+                   let attribution = UnsplashService.shared.getAttribution(for: imageURL.absoluteString) {
+                    UnsplashAttributionOverlay(attribution: attribution)
+                        .padding(12)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .background(Color(.systemGray6))
             
-            // Title and Description
+            // Title and Description (clearly separated from image)
             VStack(alignment: .leading, spacing: 12) {
                 Text(title)
                     .font(.largeTitle)
@@ -189,9 +201,11 @@ struct HeroImageSection: View {
                     .lineSpacing(2)
                     .multilineTextAlignment(.leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             .padding(.top, 20)
             .padding(.bottom, 16)
+            .background(Color(.systemBackground))
         }
     }
 }

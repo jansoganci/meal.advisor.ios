@@ -1,15 +1,16 @@
-# MealAdvisor Pivot Blueprint (iOS‑First, Simplicity‑Driven)
+# MealAdvisor Pivot Blueprint (iPhone-Only, Simplicity‑Driven)
 
 This is the definitive implementation guide for the 4–6 week pivot to a radically simplified "What should I eat today?" utility. It reconciles your draft with insights from Gemini, Perplexity, and OpenAI analyses, applies iOS Human Interface Guidelines, and prioritizes shipping fast with focus.
 
 ## 1) Strategic Alignment & Corrections
 
 - Core principle: One-tap decision relief. Deliver a great meal suggestion instantly; everything else is secondary.
+- **Platform**: iPhone only. Native iOS app with SwiftUI. No Android, no cross-platform. Focus 100% on iOS quality and Apple ecosystem integration.
 - Rebuild vs refactor: Research favors a focused rebuild of the front-end shell to avoid legacy complexity (Gemini, Perplexity). Recommended: create a new native iOS app with SwiftUI that reuses Supabase and existing auth; keep v1.0.9 code archived. If time-constrained, run the new flow behind a feature flag while leaving old routes unreachable.
 - Recipe access: Keep "See Recipe" free (Gemini). Gating recipes harms adoption. Make Favorites and Unlimited Swaps the first premium levers.
 - Weekly planning: Do not repurpose the old planner. If needed later, add a simple read‑only "Weekly View" after retention wins (Gemini) — not a full planner.
-- Photo input: Defer to Phase 2. It adds latency/cognitive load (Perplexity suggests it as core; we move it to experiment later to protect TTFV).
-- Multi‑language: Keep existing translations if already stable; freeze expansion for V1. Don’t let localization delay the pivot. Prioritize English polish + iOS HIG.
+- **Photo input**: NOT IMPLEMENTED. "What's in my fridge?" feature is explicitly excluded from roadmap. Adds complexity, latency, and cognitive load with questionable value.
+- Multi‑language: Keep existing translations if already stable; freeze expansion for V1. Don't let localization delay the pivot. Prioritize English polish + iOS HIG.
 
 ## 2) Product Definition (iOS‑First)
 
@@ -36,11 +37,13 @@ This is the definitive implementation guide for the 4–6 week pivot to a radica
 ### Nice‑to‑Have (V1.1-Phase 2)
 - Advanced filters (cuisine/diet) as premium.
 - Simple Weekly View (read‑only list of 7 suggestions; no planning UX).
-- Photo input experiment ("What’s in my fridge?").
-- Smart notifications at mealtimes (opt‑in; quiet, contextual).
+- **Smart notifications at mealtimes** (opt‑in; quiet, contextual) — PHASE 2 ONLY, not MVP.
+- Food delivery integration (simple deep links to UberEats/DoorDash).
 
 ### Explicitly Out (Archive)
 - Calorie/macro tracking, charts, full planners, social/community, shopping lists, complex onboarding, analytics dashboards.
+- **Photo input / "What's in my fridge?" feature** — Permanently excluded. Adds complexity without clear user value.
+- **Android or cross-platform development** — iPhone only. Native iOS SwiftUI focus.
 
 ## 4) Screen‑by‑Screen (HIG‑Aligned)
 
@@ -75,7 +78,7 @@ This is the definitive implementation guide for the 4–6 week pivot to a radica
 - AI usage: Keep small LLM involvement (optional) for badge phrasing/short description; selection primarily deterministic over catalog for latency/cost control. If using LLM, run via Supabase Edge with strict JSON schema + timeouts; implement fallback to deterministic ranking.
 - Caching: User‑context cache table + Core Data local cache + in‑memory/edge cache. Return cached suggestion instantly when valid; allow manual swap to fetch a new one.
 - Feature flags/remote config: Simple KV in Supabase for price tests, free swap limits, notification timing.
-- Delivery deep links: Use URL templates to Uber Eats/DoorDash with cuisine/dish; add `LSApplicationQueriesSchemes` if using URL schemes.
+- **Delivery deep links (Phase 2)**: Simple approach - use universal HTTPS links to open delivery apps/websites. Format: `https://www.ubereats.com/search?q={mealTitle}` or `https://www.doordash.com/search/?query={cuisine}`. iOS will prompt user to open in app if installed. No complex SDK integration needed. Add optional "Order Delivery" button on recipe detail screen that opens Safari/app with pre-filled search.
 
 ### Minimal Schema (add/confirm)
 - `profiles(user_id, allergies text[], dislikes text[], goal text, time_bucket text, language text)`
@@ -91,11 +94,11 @@ This is the definitive implementation guide for the 4–6 week pivot to a radica
 - StoreKit 2 (via native iOS APIs): Non‑consumable subscription with intro offer (e.g., 3‑day trial). Server verify receipts; entitlements cached client‑side using Core Data.
 - Sign in with Apple (JIT): Present a benefit‑framed, optional bottom sheet during first suggestion fetch or on high‑intent actions (Save, swap limit). Include Google/Email. Ensure "Maybe later" is visible and not misleading. Return to the suggestion regardless of choice.
   - JIT prompt copy: Title “Save your preferences for better suggestions?” Primary “Sign in with Apple” (or Google/Email). Secondary “Maybe later”. Avoid coercive phrasing (e.g., “Create account to continue”).
-- Notifications: Ask consent contextually after value; schedule gentle meal‑time suggestions; respect Focus modes.
+- **Notifications (Phase 2)**: Ask consent contextually after value; schedule gentle meal‑time suggestions; respect Focus modes. NOT in MVP - defer to Phase 2 based on user feedback.
 - Widgets (WidgetKit): Home Screen widget shows last cached suggestion with "Get Another" CTA; deep links into app; background refresh keeps content current. Implement via native WidgetKit extension; ship V1.1 if timeline tight.
 - Siri Shortcuts & App Intents: Provide an intent like "Suggest a dinner" surfaced in Spotlight/Siri; donate after first use; include parameters (meal period) and support voice.
 - Shortcuts personal automations: Encourage users (educational tip) to set a personal automation at habitual times (e.g., 6pm) to trigger the intent.
-- Universal Links & Deep Linking: Support routes that mirror top intent queries (e.g., `/recommendation/quick-dinner`, `/cuisine/italian-tonight`, `/ingredients/chicken`, `/problem/nothing-sounds-good`); add `LSApplicationQueriesSchemes` for delivery app links if needed.
+- Universal Links & Deep Linking: Support routes that mirror top intent queries (e.g., `/recommendation/quick-dinner`, `/cuisine/italian-tonight`, `/ingredients/chicken`, `/problem/nothing-sounds-good`). No need for `LSApplicationQueriesSchemes` - use universal HTTPS links for delivery apps.
 - App Review readiness: No health claims; nutrition info is “informational”; privacy policy clear; link‑outs labeled; subscriptions transparent; restore purchases prominent.
 - Performance budgets: P95 suggestion < 3s, cold start < 2s on recent iPhones, image payload < 500KB hero, crash‑free > 99%.
 - Accessibility: Dynamic Type, VoiceOver, Reduce Motion/Transparency, sufficient contrast. Use native iOS accessibility APIs for optimal screen reader support.

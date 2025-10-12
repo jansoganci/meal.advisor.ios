@@ -11,6 +11,7 @@ import AuthenticationServices
 struct SignInPromptView: View {
     @StateObject private var authService = AuthService.shared
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     
     @State private var showEmailSignIn = false
     
@@ -172,17 +173,27 @@ struct SignInPromptView: View {
                     .padding(.horizontal, 20)
             }
             
-            // Privacy Note
-            Text("We respect your privacy. See our Privacy Policy for details.")
+            // Privacy Note with Links
+            VStack(spacing: 4) {
+                Text("We respect your privacy.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                
+                Button("Privacy Policy") {
+                    if let url = URL(string: "https://jansoganci.github.io/meal.advisor.ios/privacy-policy.html") {
+                        openURL(url)
+                    }
+                }
                 .font(.caption2)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .padding(.bottom, 20)
+                .foregroundColor(.blue)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 20)
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.hidden)
-        .onChange(of: authService.isAuthenticated) { isAuth in
+        .onChange(of: authService.isAuthenticated) { _, isAuth in
             if isAuth {
                 // Dismiss after successful sign-in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

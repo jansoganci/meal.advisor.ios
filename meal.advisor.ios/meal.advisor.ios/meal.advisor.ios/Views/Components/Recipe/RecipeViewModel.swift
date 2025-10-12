@@ -45,14 +45,28 @@ final class RecipeViewModel: ObservableObject {
         switch meal.cuisine {
         case .italian:
             return "🇮🇹"
+        case .turkish:
+            return "🇹🇷"
+        case .chinese:
+            return "🥢"
+        case .japanese:
+            return "🍣"
+        case .french:
+            return "🥖"
+        case .thai:
+            return "🌶️"
+        case .indian:
+            return "🍛"
+        case .mexican:
+            return "🌮"
+        case .spanish:
+            return "🇪🇸"
         case .american:
             return "🇺🇸"
         case .asian:
-            return "🥢"
+            return "🍜"  // General Asian cuisine
         case .mediterranean:
-            return "🫒"
-        case .mexican:
-            return "🌮"
+            return "🫒"  // Mediterranean cuisine
         }
     }
     

@@ -11,40 +11,31 @@ struct ContentView: View {
     @StateObject private var appState = AppState.shared
     
     var body: some View {
-        Group {
-            if appState.isAuthenticated {
-                TabView {
-                    HomeView()
-                        .tabItem {
-                            Image(systemName: "house.fill")
-                            Text(String(localized: "home"))
-                        }
-
-                    FavoritesView()
-                        .tabItem {
-                            Image(systemName: "heart.fill")
-                            Text(String(localized: "favorites"))
-                        }
-
-                    SettingsView()
-                        .tabItem {
-                            Image(systemName: "gearshape.fill")
-                            Text(String(localized: "settings"))
-                        }
+        // ✅ ALWAYS show TabView - no auth gate
+        // Authentication is optional and contextual (JIT prompts)
+        TabView {
+            HomeView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text(String(localized: "home"))
                 }
-                .tint(.primaryOrange)
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            } else {
-                SignInPromptView(context: .firstSuggestion)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            }
+
+            FavoritesView()
+                .tabItem {
+                    Image(systemName: "heart.fill")
+                    Text(String(localized: "favorites"))
+                }
+
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gearshape.fill")
+                    Text(String(localized: "settings"))
+                }
         }
-        .animation(.easeInOut(duration: 0.3), value: appState.isAuthenticated)
+        .tint(.primaryOrange)
         .onAppear {
-            print("🏠 [ContentView] Appeared with auth status: \(appState.isAuthenticated)")
-        }
-        .onChange(of: appState.isAuthenticated) { isAuth in
-            print("🏠 [ContentView] Auth status changed to: \(isAuth)")
+            print("🏠 [ContentView] App launched - Auth status: \(appState.isAuthenticated)")
+            print("🏠 [ContentView] Using device ID: \(AuthService.shared.deviceID)")
         }
     }
 }

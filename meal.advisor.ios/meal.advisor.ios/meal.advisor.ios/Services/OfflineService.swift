@@ -141,32 +141,92 @@ final class OfflineService: ObservableObject {
         return (count: cachedMeals.count, lastSync: lastSync)
     }
     
-    // MARK: - Persistence
+    // MARK: - Persistence (FileManager-based)
     
+    // MIGRATED: UserDefaults → FileManager for large meal data
+    // UserDefaults was storing up to 50 meals (~25MB), causing performance issues
+    private let mealsFilename = "offline_meals_v2.json"
+    
+    /// Get the caches directory URL for storing meal data
+    private func getCachesDirectory() -> URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    }
+    
+    /// Get the full file URL for cached meals
+    private func getMealsFileURL() -> URL {
+        getCachesDirectory().appendingPathComponent(mealsFilename)
+    }
+    
+    /// Load cached meals from disk (FileManager)
     private func loadCachedMeals() {
-        guard let data = defaults.data(forKey: offlineMealsKey) else {
+        // MIGRATION: First try to load from old UserDefaults location (one-time migration)
+        if let oldData = defaults.data(forKey: offlineMealsKey) {
+            print("💾 [OfflineService] 🔄 Migrating meals from UserDefaults to FileManager...")
+            do {
+                cachedMeals = try JSONDecoder().decode([Meal].self, from: oldData)
+                
+                // Save to new FileManager location
+                saveMealsToFileManager()
+                
+                // Clear old UserDefaults data
+                defaults.removeObject(forKey: offlineMealsKey)
+                
+                print("💾 [OfflineService] ✅ Migrated \(cachedMeals.count) meals to FileManager")
+                updateHasOfflineMeals()
+                return
+            } catch {
+                print("💾 [OfflineService] ⚠️ Migration from UserDefaults failed: \(error)")
+                
+                // 🔧 FIX: Clear corrupted data to prevent continuous errors
+                defaults.removeObject(forKey: offlineMealsKey)
+                print("💾 [OfflineService] 🧹 Cleared corrupted UserDefaults data")
+                
+                // Continue to try loading from FileManager
+            }
+        }
+        
+        // MIGRATED: Load from FileManager instead of UserDefaults
+        let fileURL = getMealsFileURL()
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            print("💾 [OfflineService] No cached meals file found")
             updateHasOfflineMeals()
             return
         }
         
         do {
+            let data = try Data(contentsOf: fileURL)
             cachedMeals = try JSONDecoder().decode([Meal].self, from: data)
             updateHasOfflineMeals()
-            print("💾 [OfflineService] Loaded \(cachedMeals.count) cached meals")
+            print("💾 [OfflineService] ✅ Loaded \(cachedMeals.count) cached meals from disk")
         } catch {
-            print("💾 [OfflineService] Failed to load cached meals: \(error)")
+            print("💾 [OfflineService] ⚠️ Failed to load cached meals from disk: \(error)")
             cachedMeals = []
             updateHasOfflineMeals()
         }
     }
     
+    /// Save cached meals to disk (FileManager)
     private func saveCachedMeals() {
+        saveMealsToFileManager()
+        
+        // Update last sync timestamp in UserDefaults (small metadata only)
+        defaults.set(Date(), forKey: lastSyncKey)
+    }
+    
+    /// Helper: Save meals array to FileManager as JSON
+    private func saveMealsToFileManager() {
+        let fileURL = getMealsFileURL()
+        
         do {
             let data = try JSONEncoder().encode(cachedMeals)
-            defaults.set(data, forKey: offlineMealsKey)
-            defaults.set(Date(), forKey: lastSyncKey)
+            
+            // MIGRATED: Write to FileManager instead of UserDefaults
+            try data.write(to: fileURL, options: [.atomic])
+            
+            print("💾 [OfflineService] ✅ Saved \(cachedMeals.count) meals to disk (\(data.count / 1024)KB)")
         } catch {
-            print("💾 [OfflineService] Failed to save cached meals: \(error)")
+            print("💾 [OfflineService] ⚠️ Failed to save cached meals to disk: \(error)")
         }
     }
     

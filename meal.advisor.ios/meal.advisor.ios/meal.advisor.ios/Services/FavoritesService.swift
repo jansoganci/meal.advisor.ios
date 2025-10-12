@@ -113,12 +113,8 @@ final class FavoritesService: ObservableObject {
             
             // For now, we'll need to fetch meals individually
             // TODO: When we have a batch fetch API, use that instead
-            do {
-                if let meal = await findMealById(uuid) {
-                    loadedMeals.append(meal)
-                }
-            } catch {
-                print("🍽️ [FavoritesService] Failed to load meal \(uuid): \(error)")
+            if let meal = await findMealById(uuid) {
+                loadedMeals.append(meal)
             }
         }
         

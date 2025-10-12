@@ -100,7 +100,7 @@ struct FeatureUnlockTransition: ViewModifier {
                     }
                 }
             )
-            .onChange(of: isUnlocked) { unlocked in
+            .onChange(of: isUnlocked) { _, unlocked in
                 if unlocked {
                     showAnimation = true
                     
